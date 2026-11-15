@@ -206,3 +206,4 @@ describe('MedicationFormModal Component', () => {
     expect(handleClose).toHaveBeenCalled();
   });
 });
+

@@ -60,7 +60,55 @@ export default function AppointmentsTab() {
 
   useEffect(() => {
     fetchAppointments();
-  }, [fetchAppointments]);
+
+    if (!circle?.id) return;
+
+    // Subscribe to realtime updates for appointments in this circle
+    const channel = supabase
+      .channel(`appointments_live_${circle.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `circle_id=eq.${circle.id}`,
+        },
+        () => {
+          fetchAppointments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [circle?.id, fetchAppointments]);
+
+  const getGoogleCalendarUrl = (apt) => {
+    if (!apt.starts_at) return '#';
+    try {
+      const startDate = new Date(apt.starts_at);
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      const startIso = startDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
+      const endIso = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '');
+      const dates = `${startIso}/${endIso}`;
+      const title = encodeURIComponent(apt.title || 'Medical Appointment');
+      const details = encodeURIComponent(
+        [
+          apt.doctor ? `Doctor: ${apt.doctor}` : '',
+          apt.notes ? `Notes: ${apt.notes}` : '',
+          'Scheduled via CircleCare',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      );
+      const location = encodeURIComponent(apt.location || '');
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
+    } catch {
+      return '#';
+    }
+  };
 
   const handleOpenAdd = () => {
     setSelectedAppointment(null);
@@ -220,6 +268,33 @@ export default function AppointmentsTab() {
                         <span>{apt.location}</span>
                       </p>
                     )}
+
+                    {/* Quick Action Links: Directions & Google Calendar */}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      {apt.location && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(apt.location)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-800 rounded-xl text-xs sm:text-sm font-bold border border-rose-200 transition"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Get Directions</span>
+                          <ExternalLink className="w-3 h-3 text-rose-500" />
+                        </a>
+                      )}
+
+                      <a
+                        href={getGoogleCalendarUrl(apt)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-800 rounded-xl text-xs sm:text-sm font-bold border border-blue-200 transition"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Add to Google Calendar</span>
+                        <ExternalLink className="w-3 h-3 text-blue-500" />
+                      </a>
+                    </div>
 
                     {/* Notes info */}
                     {apt.notes && (
