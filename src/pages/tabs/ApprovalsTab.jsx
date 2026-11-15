@@ -249,7 +249,7 @@ export default function ApprovalsTab({ onPendingCountChange }) {
                     <div className="flex items-center gap-3">
                       {actionBadge}
                       <span className="text-sm font-bold text-slate-500">
-                        Request #{req.id.substring(0, 8)}
+                        Request #{String(req.id).substring(0, 8)}
                       </span>
                     </div>
 

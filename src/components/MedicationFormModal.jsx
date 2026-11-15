@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
+import { buildChangeRequestRecord } from '../lib/changeRequests';
 import ErrorMessage from './ErrorMessage';
 import { 
   X, 
@@ -148,16 +149,18 @@ export default function MedicationFormModal({
         // Caretaker or Family: MUST NOT write directly to medications.
         // Insert into change_requests for Elder approval.
         const reqAction = isEdit ? 'update' : 'add';
+        const requestRecord = buildChangeRequestRecord({
+          circleId: circle.id,
+          userId: user.id,
+          action: reqAction,
+          values: payloadData,
+          medicationId: isEdit ? initialMedication.id : null,
+          originalMedication: initialMedication,
+        });
+
         const { error: reqErr } = await supabase
           .from('change_requests')
-          .insert({
-            circle_id: circle.id,
-            medication_id: isEdit ? initialMedication.id : null,
-            requested_by: user.id,
-            action: reqAction,
-            payload: payloadData,
-            status: 'pending',
-          });
+          .insert(requestRecord);
 
         if (reqErr) throw reqErr;
 

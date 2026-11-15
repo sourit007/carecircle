@@ -198,6 +198,36 @@ npm run preview
 
 ---
 
+## 🧪 Testing
+
+CircleCare includes an automated test suite built with **[Vitest](https://vitest.dev/)**, **[React Testing Library](https://testing-library.com/)**, **[jest-dom](https://github.com/testing-library/jest-dom)**, and **[jsdom](https://github.com/jsdom/jsdom)**.
+
+All network calls to Supabase (`src/lib/supabase.js`) are fully mocked using `vi.mock`, ensuring tests run instantly and deterministically offline.
+
+### Running Tests
+
+Execute the full test suite once:
+```bash
+npm test
+```
+
+Run tests in interactive watch mode:
+```bash
+npx vitest
+```
+
+### Test Suites & Coverage
+
+| Test Suite | File | What It Covers |
+| :--- | :--- | :--- |
+| **Pure Helper Functions** | `src/__tests__/pureHelpers.test.js` | • Time and date formatting across circle timezones (`formatTimeInTz`, `formatDateInTz`, `formatDateTimeInTz`, `getCircleDayRange`)<br>• Dose status badge text and color palette mapping (`getDoseStatusConfig` for `pending`, `taken`, `missed`)<br>• Building `change_requests` payload and record structures for `add`, `update`, and `delete` actions |
+| **Dose Card Component** | `src/__tests__/DoseCard.test.jsx` | • Displays the accessible **"I took it"** button for **Elder** and **Caretaker** roles<br>• Hides the button for **Family** members and displays a read-only indicator<br>• Verifies explicit textual status badges (`STATUS: PENDING`, `STATUS: TAKEN`, `STATUS: MISSED`)<br>• Confirms clicking the button calls `supabase.rpc('mark_dose_taken', { p_dose: id })` |
+| **Approvals Page** | `src/__tests__/ApprovalsTab.test.jsx` | • **Approve Change** and **Reject Request** buttons are exclusively visible to the **Elder**<br>• Caretaker and Family members see a read-only pending review notice<br>• Verifies clicking Approve invokes `supabase.rpc('approve_change', { p_id })`<br>• Verifies clicking Reject invokes `supabase.rpc('reject_change', { p_id })` |
+| **Medications Form Modal** | `src/__tests__/MedicationFormModal.test.jsx` | • Submissions by **Caretakers** or **Family** insert into `change_requests` for elder approval and strictly never write to `medications`<br>• Submissions by the **Elder** insert directly into `medications` |
+| **Login & Auth Page** | `src/__tests__/LoginPage.test.jsx` | • Renders the **"Continue with Google"** OAuth sign-in button<br>• Displays clear, accessible alert banners when Supabase authentication returns errors |
+
+---
+
 ## 🔒 Security & Privacy
 
 - **Never exposes the Supabase service role key**: All client operations run through the public `anon` key.
@@ -208,3 +238,4 @@ npm run preview
 
 ## 📄 License
 MIT License. Built for supporting elderly care, dignity, and family connection.
+

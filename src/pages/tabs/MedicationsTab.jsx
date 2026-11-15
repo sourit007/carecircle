@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { supabase } from '../../lib/supabase';
+import { buildChangeRequestRecord } from '../../lib/changeRequests';
 import MedicationFormModal from '../../components/MedicationFormModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
@@ -157,22 +158,18 @@ export default function MedicationsTab() {
         showToast(`Stopped ${med.name}. Marked as inactive.`, 'success');
       } else {
         // Caretaker / Family: submit change_request with action 'delete'
+        const requestRecord = buildChangeRequestRecord({
+          circleId: circle.id,
+          userId: user.id,
+          action: 'delete',
+          values: med,
+          medicationId: med.id,
+          originalMedication: med,
+        });
+
         const { error: reqErr } = await supabase
           .from('change_requests')
-          .insert({
-            circle_id: circle.id,
-            medication_id: med.id,
-            requested_by: user.id,
-            action: 'delete',
-            payload: {
-              name: med.name,
-              dosage: med.dosage,
-              notes: med.notes,
-              times: med.times,
-              active: false,
-            },
-            status: 'pending',
-          });
+          .insert(requestRecord);
 
         if (reqErr) throw reqErr;
 

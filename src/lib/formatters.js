@@ -95,3 +95,40 @@ export function getRoleBadgeConfig(role) {
   }
 }
 
+export function getDoseStatusConfig(status) {
+  switch (status) {
+    case 'taken':
+      return {
+        status: 'taken',
+        label: 'Taken',
+        badgeText: 'STATUS: TAKEN',
+        badgeBg: 'bg-emerald-100 text-emerald-950 border-emerald-400',
+        textColor: 'text-emerald-700',
+        cardBg: 'border-emerald-200 bg-emerald-50/20',
+        iconBg: 'bg-emerald-100 text-emerald-800',
+      };
+    case 'missed':
+      return {
+        status: 'missed',
+        label: 'Missed',
+        badgeText: 'STATUS: MISSED',
+        badgeBg: 'bg-rose-100 text-rose-950 border-rose-400',
+        textColor: 'text-rose-700',
+        cardBg: 'border-rose-200 bg-rose-50/20',
+        iconBg: 'bg-rose-100 text-rose-800',
+      };
+    case 'pending':
+    default:
+      return {
+        status: 'pending',
+        label: 'Pending',
+        badgeText: 'STATUS: PENDING',
+        badgeBg: 'bg-amber-100 text-amber-950 border-amber-400',
+        textColor: 'text-amber-700',
+        cardBg: 'border-slate-300 hover:border-blue-400 hover:shadow-md',
+        iconBg: 'bg-blue-100 text-blue-800',
+      };
+  }
+}
+
+

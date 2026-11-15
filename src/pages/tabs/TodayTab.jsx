@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { getCircleDayRange, formatTimeInTz, formatDateInTz } from '../../lib/dateUtils';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
+import DoseCard from '../../components/DoseCard';
 import { 
   CheckCircle2, 
   Clock, 
@@ -428,123 +429,22 @@ export default function TodayTab() {
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
-            {doses.map((dose) => {
-              const med = dose.medications || {};
-              const isTaken = dose.status === 'taken';
-              const isMissed = dose.status === 'missed';
-              const isPending = dose.status === 'pending';
-              const isProcessing = actionLoadingId === dose.id;
-
-              // Distinct status colors AND clear text labels
-              let statusBadge = null;
-              if (isTaken) {
-                statusBadge = (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold text-xs sm:text-sm bg-emerald-100 text-emerald-950 border border-emerald-400">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                    <span>STATUS: TAKEN</span>
-                    {dose.taken_at && (
-                      <span className="font-normal text-xs text-emerald-900 hidden sm:inline">
-                        ({formatTimeInTz(dose.taken_at, timezone)})
-                      </span>
-                    )}
-                  </span>
-                );
-              } else if (isMissed) {
-                statusBadge = (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold text-xs sm:text-sm bg-rose-100 text-rose-950 border border-rose-400">
-                    <AlertCircle className="w-4 h-4 text-rose-700" />
-                    <span>STATUS: MISSED</span>
-                  </span>
-                );
-              } else {
-                statusBadge = (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold text-xs sm:text-sm bg-amber-100 text-amber-950 border border-amber-400">
-                    <Clock className="w-4 h-4 text-amber-700" />
-                    <span>STATUS: PENDING</span>
-                  </span>
-                );
-              }
-
-              return (
-                <div
-                  key={dose.id}
-                  className={`bg-white rounded-3xl border-2 p-5 sm:p-7 shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                    isTaken
-                      ? 'border-emerald-200 bg-emerald-50/20'
-                      : isMissed
-                      ? 'border-rose-200 bg-rose-50/20'
-                      : 'border-slate-300 hover:border-blue-400 hover:shadow-md'
-                  }`}
-                >
-                  {/* Left: Time, Medicine Name, Dosage, Notes */}
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3.5 sm:p-4 rounded-2xl flex-shrink-0 ${
-                      isTaken ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      <Pill className="w-7 h-7 sm:w-8 sm:h-8" />
-                    </div>
-
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="text-base sm:text-lg font-mono font-black text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-xl border border-blue-200">
-                          {formatTimeInTz(dose.scheduled_at, timezone)}
-                        </span>
-                        {statusBadge}
-                      </div>
-
-                      <h4 className={`font-black text-slate-900 ${elderMode ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl'}`}>
-                        {med.name || 'Prescription Medicine'}
-                      </h4>
-
-                      <p className="mt-1 text-slate-700 font-bold text-sm sm:text-base">
-                        Dosage: <span className="text-slate-900">{med.dosage || 'As directed'}</span>
-                      </p>
-
-                      {med.notes && (
-                        <p className="mt-1 text-slate-600 font-medium text-xs sm:text-sm">
-                          Instructions: {med.notes}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right: "I took it" button */}
-                  <div>
-                    {!isTaken && canMarkDose && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkTaken(dose.id, med.name)}
-                        disabled={isProcessing}
-                        className={`w-full md:w-auto flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-black text-white transition shadow-lg ${
-                          isMissed
-                            ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 shadow-amber-200'
-                            : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-emerald-200'
-                        } disabled:opacity-50 ${
-                          elderMode ? 'text-xl sm:text-2xl min-h-[64px]' : 'text-base sm:text-lg min-h-[48px]'
-                        }`}
-                        aria-label={`Mark ${med.name || 'dose'} taken`}
-                      >
-                        <Check className="w-5 h-5 sm:w-6 sm:h-6" />
-                        <span>{isProcessing ? 'Recording...' : 'I took it'}</span>
-                      </button>
-                    )}
-
-                    {isTaken && (
-                      <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm sm:text-base bg-emerald-100/70 px-4 py-2.5 rounded-xl border border-emerald-300">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        <span>Completed</span>
-                      </div>
-                    )}
-
-                    {!isTaken && !canMarkDose && (
-                      <div className="text-slate-500 font-semibold text-xs sm:text-sm bg-slate-100 px-4 py-2 rounded-xl border border-slate-200">
-                        Family View (Read Only)
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {doses.map((dose) => (
+              <DoseCard
+                key={dose.id}
+                dose={dose}
+                role={member?.role}
+                timezone={timezone}
+                elderMode={elderMode}
+                onMarkSuccess={() => {
+                  showToast(
+                    `Great job! Marked ${dose.medications?.name || 'medication'} as taken.`,
+                    'success'
+                  );
+                  fetchDoses(true);
+                }}
+              />
+            ))}
           </div>
         </div>
       )}
